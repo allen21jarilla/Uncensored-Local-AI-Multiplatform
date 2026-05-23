@@ -153,8 +153,8 @@ class LlmService extends GetxService {
       int contextSize = Platform.isAndroid ? 1024 : 2048;
       int gpuLayers = storage.gpuLayers;
       int threads = Platform.numberOfProcessors > 4 ? 4 : 0;
-      int? batchSize;
-      int? microBatchSize;
+      int batchSize = 0;
+      int microBatchSize = 0;
 
       // Parse custom CLI parameter overrides if present
       final customArgs = _parseCommandLineArgs(storage.customLlamaParams);
