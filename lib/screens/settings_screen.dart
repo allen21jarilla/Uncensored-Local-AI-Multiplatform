@@ -281,6 +281,71 @@ class _SettingsBody extends StatelessWidget {
               _sectionHeader(context, 'Hardware Configuration'),
               const SizedBox(height: 8),
               _HardwareSettingsCard(storage: storage),
+              const SizedBox(height: 12),
+              _card(
+                context,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Advanced CLI Parameter Overrides',
+                        style: TextStyle(
+                          color: context.text,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pass custom command line flags to customize the model loading engine (e.g. -c 2048 -t 8 -ngl 33 -b 512).',
+                        style: TextStyle(
+                          color: context.textD,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        initialValue: storage.customLlamaParams,
+                        style: TextStyle(
+                          color: context.text,
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'e.g. -c 2048 -t 8 -ngl 33',
+                          hintStyle: TextStyle(color: context.textD),
+                          filled: true,
+                          fillColor: context.bgInput,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: context.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: context.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: AppColors.accent,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          storage.customLlamaParams = value.trim();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 28),
 

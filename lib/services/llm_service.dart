@@ -147,13 +147,52 @@ class LlmService extends GetxService {
         return;
       }
 
-      // Use smaller context on Android to prevent OOM kills.
-      // Desktop can handle 2048, but Android devices with limited RAM
-      // need 1024 to avoid the Low Memory Killer (LMK).
-      final contextSize = Platform.isAndroid ? 1024 : 2048;
+      // Base values
+      int contextSize = Platform.isAndroid ? 1024 : 2048;
+      int gpuLayers = storage.gpuLayers;
+      int threads = Platform.numberOfProcessors > 4 ? 4 : 0;
+      int? batchSize;
+      int? microBatchSize;
+
+      // Parse custom CLI parameter overrides if present
+      final customArgs = _parseCommandLineArgs(storage.customLlamaParams);
+      
+      // Override context size (-c or --ctx-size)
+      final customCtx = customArgs['-c'] ?? customArgs['--ctx-size'];
+      if (customCtx != null) {
+        final parsed = int.tryParse(customCtx);
+        if (parsed != null) contextSize = parsed;
+      }
+
+      // Override GPU layers (-ngl or --n-gpu-layers)
+      final customNgl = customArgs['-ngl'] ?? customArgs['--n-gpu-layers'];
+      if (customNgl != null) {
+        final parsed = int.tryParse(customNgl);
+        if (parsed != null) gpuLayers = parsed;
+      }
+
+      // Override threads (-t or --threads)
+      final customThreads = customArgs['-t'] ?? customArgs['--threads'];
+      if (customThreads != null) {
+        final parsed = int.tryParse(customThreads);
+        if (parsed != null) threads = parsed;
+      }
+
+      // Override batch size (-b or --batch-size)
+      final customBatch = customArgs['-b'] ?? customArgs['--batch-size'];
+      if (customBatch != null) {
+        final parsed = int.tryParse(customBatch);
+        if (parsed != null) batchSize = parsed;
+      }
+
+      // Override micro-batch size (--ubatch-size)
+      final customUbatch = customArgs['--ubatch-size'];
+      if (customUbatch != null) {
+        final parsed = int.tryParse(customUbatch);
+        if (parsed != null) microBatchSize = parsed;
+      }
 
       // Map the string backend to GpuBackend enum
-      final storage = Get.find<ChatStorageService>();
       GpuBackend parsedBackend;
       switch (storage.backendType) {
         case 'vulkan':
@@ -166,19 +205,18 @@ class LlmService extends GetxService {
           parsedBackend = GpuBackend.cpu;
       }
 
-      // Read gpu layers
-      final userGpuLayers = storage.gpuLayers;
-
       // Optimize threads: 4 for both generation and batch processing to keep memory stable.
       final params = ModelParams(
         contextSize: contextSize,
-        gpuLayers: userGpuLayers, 
+        gpuLayers: gpuLayers, 
         preferredBackend: parsedBackend,
-        numberOfThreads: Platform.numberOfProcessors > 4 ? 4 : 0, 
-        numberOfThreadsBatch: Platform.numberOfProcessors > 4 ? 4 : 0,
+        numberOfThreads: threads, 
+        numberOfThreadsBatch: threads,
+        batchSize: batchSize,
+        microBatchSize: microBatchSize,
       );
 
-      log?.info('Backend=$parsedBackend, GPU layers=$userGpuLayers, ctx=$contextSize, threads=${Platform.numberOfProcessors > 4 ? 4 : 0}', source: 'LLM');
+      log?.info('Backend=$parsedBackend, GPU layers=$gpuLayers, ctx=$contextSize, threads=$threads, batch=$batchSize, ubatch=$microBatchSize', source: 'LLM');
 
       await _engine!.loadModel(path, modelParams: params);
       progressTimer.cancel();
@@ -462,6 +500,37 @@ class LlmService extends GetxService {
 
     buffer.writeln('<|assistant|>');
     return buffer.toString();
+  }
+
+  Map<String, String> _parseCommandLineArgs(String input) {
+    final Map<String, String> results = {};
+    if (input.trim().isEmpty) return results;
+
+    // Simple shell-like argument parser that handles quoted strings
+    final List<String> args = [];
+    final RegExp argRegExp = RegExp(r'[^\s"]+|"[^"]*"');
+    final matches = argRegExp.allMatches(input);
+    for (final m in matches) {
+      String arg = m.group(0)!;
+      if (arg.startsWith('"') && arg.endsWith('"')) {
+        arg = arg.substring(1, arg.length - 1);
+      }
+      args.add(arg);
+    }
+
+    for (int i = 0; i < args.length; i++) {
+      final String arg = args[i];
+      if (arg.startsWith('-')) {
+        // Check if there is a value after the flag
+        if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
+          results[arg] = args[i + 1];
+          i++; // Skip the value on next iteration
+        } else {
+          results[arg] = 'true';
+        }
+      }
+    }
+    return results;
   }
 
   @override

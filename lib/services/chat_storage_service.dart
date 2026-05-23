@@ -102,6 +102,12 @@ class ChatStorageService extends GetxService {
   set localApiEmbeddingsEnabled(bool value) =>
       _settingsBox.put('local_api_embeddings_enabled', value);
 
+  String get customLlamaParams =>
+      _settingsBox.get('custom_llama_params', defaultValue: '') as String;
+
+  set customLlamaParams(String value) =>
+      _settingsBox.put('custom_llama_params', value);
+
   // ── Hardware Settings ──────────────────────────────────────
 
   int get gpuLayers =>
