@@ -147,6 +147,8 @@ class LlmService extends GetxService {
         return;
       }
 
+      final storage = Get.find<ChatStorageService>();
+
       // Base values
       int contextSize = Platform.isAndroid ? 1024 : 2048;
       int gpuLayers = storage.gpuLayers;
