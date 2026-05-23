@@ -1,11 +1,12 @@
 <div align="center">
 
-  <h1>Uncensored Local AI Multi-Platform</h1>
+  <h1>Uncensored Local AI Multi-Platform (Custom Fork)</h1>
 
   <p><strong>Run unrestricted AI models entirely on your device.<br/>No cloud. No filters. No limits.</strong></p>
 
+  <p>🚀 <strong>Custom Fork Maintained by <a href="https://github.com/allen21jarilla">allen21jarilla</a> (Allen Jarilla)</strong></p>
 
-  [Overview](#overview) · [Download](#download) · [Features](#features) · [Quick Start](#quick-start) · [Local API](#local-api-server) · [Roadmap](#roadmap)
+  [Overview](#overview) · [Download](#download) · [Fork Additions](#-fork-additions) · [Features](#features) · [Quick Start](#quick-start) · [Local API](#local-api-server) · [Credits & Acknowledgments](#-credits--acknowledgments) · [License](#license)
 
 </div>
 
@@ -15,35 +16,40 @@
 
 **Uncensored Local AI** is a mobile-first application that runs powerful open-source AI models directly on your **Android or iOS device** — with zero censorship, zero cloud dependency, and zero monthly fees.
 
+This repository is a **highly enhanced custom fork** extending the original architecture to support advanced embeddings connectivity (for tools like SillyTavern) and power-user parameters customization.
+
 No API keys. No subscriptions. No content restrictions. Your conversations never leave your device.
-
-> Think of it as ChatGPT — but running **on your phone**, with **no rules**.
-
-> **Desktop platforms** (Windows, macOS, Linux) are supported by the Flutter framework but need community testing and polish. **[We'd love your help!](#-contributing)**
-
-**🎥 Watch the Setup & Demo Video: [https://youtu.be/2Pnv68iHIaQ](https://youtu.be/2Pnv68iHIaQ)**
-
-[![Uncensored Local AI Demo](https://img.youtube.com/vi/2Pnv68iHIaQ/maxresdefault.jpg)](https://youtu.be/2Pnv68iHIaQ)
 
 ---
 
 ## Download
 
-### Android APK — Latest Release (v2.0.0)
+### Android APK — Cloud-Compiled Releases
 
-| APK | Architecture | Best For | Size |
-|-----|-------------|----------|------|
-| [**app-arm64-v8a-release.apk**](https://github.com/techjarves/Uncensored-Local-AI-Multiplatform/releases/download/v2.0.0/app-arm64-v8a-release.apk) | ARM 64-bit | **Most phones (2018+)** | ~65 MB |
-| [**app-armeabi-v7a-release.apk**](https://github.com/techjarves/Uncensored-Local-AI-Multiplatform/releases/download/v2.0.0/app-armeabi-v7a-release.apk) | ARM 32-bit | Older/budget phones | ~18 MB |
-| [**app-x86_64-release.apk**](https://github.com/techjarves/Uncensored-Local-AI-Multiplatform/releases/download/v1.0.0/app-x86_64-release.apk) | x86 64-bit | Emulators / ChromeOS | ~58 MB |
+Every time code is pushed, our **GitHub Actions CI/CD pipeline** automatically compiles a fresh release APK using cloud runners.
 
-> **Not sure which to pick?** Download `arm64-v8a` — it works on virtually all modern Android phones.
+👉 **[Go to GitHub Releases / Actions to Download the Latest APK](https://github.com/allen21jarilla/Uncensored-Local-AI-Multiplatform/actions)**
 
-### iOS IPA — Pre-Release
+---
 
-| File | Note |
-|------|------|
-| [**ios_pre_release.zip**](https://github.com/user-attachments/files/26956389/ios_pre_release.zip) | **Important:** You must **extract** this `.zip` file after downloading to get the actual **`.ipa`** app file to install. |
+## 🌟 Fork Additions
+
+This fork introduces powerful capabilities designed for advanced local AI integration:
+
+### 1. Vector Embeddings Endpoint (`/v1/embeddings`)
+Exposes a standard OpenAI-compatible vector embeddings route, allowing external tools (such as **SillyTavern**) to interact with your loaded model for semantic memory search:
+- Integrates directly with `llamadart` FFI engine.
+- Supports single-string or batch-string list inputs.
+- Accurately counts prompt tokens for standard OpenAI usage returns.
+- Toggled on/off easily using a state-managed settings switch.
+
+### 2. Advanced CLI Parameter Overrides
+Introduces a custom argument parsing engine that maps standard `llama.cpp` command-line flags directly into the native FFI `ModelParams` constructor. Easily customize:
+- `-c` or `--ctx-size` (caps context size to protect mobile device RAM).
+- `-ngl` or `--n-gpu-layers` (customizes GPU offload layer count).
+- `-t` or `--threads` (specifies CPU thread allocation).
+- `-b` or `--batch-size` (prompt processing batch ingestion).
+- `--ubatch-size` (physical micro-batch size).
 
 ---
 
@@ -55,154 +61,78 @@ No API keys. No subscriptions. No content restrictions. Your conversations never
 | **Total Privacy** | All conversations stay on-device. Nothing is sent to any server, ever |
 | **Fully Offline** | Works on planes, in remote areas, on restricted networks — no internet needed after model download |
 | **Cross-Platform** | One codebase for Android, iOS, Windows, macOS, and Linux |
-| **Local OpenAI API** | Built-in HTTP server compatible with any OpenAI-standard client |
+| **Local OpenAI API** | Built-in HTTP server serving `/v1/chat/completions` and `/v1/embeddings` |
 | **Model Library** | Download, import, and manage GGUF models directly in the app |
 | **Chat History** | Persistent conversation history stored locally via Hive |
-| **Live Metrics** | Real-time tokens/sec and loading progress tracking |
 
 ---
 
 ## Quick Start
 
-### Android
+### Sideloading Android APK
 
-1. Download the correct APK from the [Download](#-download) table above
-2. On your phone: **Settings → Install unknown apps** → allow your browser
-3. Tap the downloaded APK to install
-4. Open the app, go to **Models** tab, download a model, and start chatting
+1. Go to the **Actions** or **Releases** tab on your GitHub fork page and download the latest compiled `release-apk`.
+2. On your phone: **Settings → Install unknown apps** → allow your browser.
+3. Tap the downloaded APK to install.
+4. Open the app, go to **Models** tab, download a model, and start chatting.
 
-### iOS
+### Sideloading iOS IPA
 
-**1. Sideloading via TrollStore (Recommended - No 7 day limit):**
-1. Download [**ios_pre_release.zip**](https://github.com/user-attachments/files/26956389/ios_pre_release.zip) to your device.
-2. Unzip/extract it using the built-in iOS **Files** app to get the **`.ipa`** file.
-3. Open TrollStore, tap the **+** in the top right, and choose **Install IPA File**.
-4. Select the extracted `.ipa` file and install.
-
-**2. Sideloading via AltStore / AltServer (Requires PC/Mac):**
-1. Ensure AltServer is running on your computer and AltStore is installed on your iPhone.
-2. Download [**ios_pre_release.zip**](https://github.com/user-attachments/files/26956389/ios_pre_release.zip) to your device and extract the **`.ipa`** file using the **Files** app.
-3. Open AltStore on your device, go to **My Apps**, and tap the **+** at the top left.
-4. Select the `.ipa` file to install (your device must be on the same Wi-Fi or connected via cable to your AltServer computer).
-
-**3. Build from Source:**
-
-**Prerequisites:** Mac with Xcode 15+ · [Flutter SDK](https://flutter.dev/docs/get-started/install)
-
-```bash
-git clone https://github.com/techjarves/Uncensored-Local-AI-Multiplatform.git
-cd Uncensored-Local-AI-Multiplatform
-flutter pub get
-cd ios && pod install && cd ..
-flutter build ios --release
-# Open ios/Runner.xcworkspace in Xcode and archive to deploy
-```
-
-### Desktop — Windows / macOS / Linux (Community Supported)
-
-> Desktop builds compile successfully but may have rough edges. **We are actively looking for contributors** to help test and polish the desktop experience.
-
-```bash
-git clone https://github.com/techjarves/Uncensored-Local-AI-Multiplatform.git
-cd Uncensored-Local-AI-Multiplatform
-flutter pub get
-flutter run -d windows   # or macos / linux
-```
-
-If you encounter issues on desktop, please [open an issue](https://github.com/techjarves/Uncensored-Local-AI-Multiplatform/issues) — your feedback directly shapes the roadmap.
-
----
-
-## Recommended Models
-
-| Model | Size | Best For | Type |
-|-------|------|----------|------|
-| **Gemma 2 2B** | ~1.6 GB | Low-RAM phones, fast replies | Standard |
-| **Gemma 4 E4B Heretic** | ~5.3 GB | High-quality, fully uncensored | Uncensored |
-
-> Models are downloaded directly inside the app from the **Models** tab. No manual setup needed.
+1. Download the pre-release iOS assets.
+2. Extract the `.ipa` package from the zip.
+3. Install using TrollStore (recommended) or AltStore on your device.
 
 ---
 
 ## Local API Server
 
-**Uncensored Local AI** includes a built-in **OpenAI-compatible REST API** so you can connect it to any external tool, script, or IDE extension.
-
 ### Setup
-
-1. Load a model in the app
-2. Go to **Settings → Local API Server** and toggle it **ON**
-3. Use `http://127.0.0.1:4891/v1` as your base URL
+1. Load a model in the app.
+2. Go to **Settings → Local API Server** and toggle it **ON**.
+3. Toggle on **Enable Vector Embeddings** to expose the vector routing.
+4. Use `http://127.0.0.1:4891/v1` as your base URL.
 
 ### Endpoints
-
 ```bash
-# List loaded models
+# Get loaded models
 curl http://127.0.0.1:4891/v1/models
+
+# Generate embeddings (SillyTavern and semantic search)
+curl http://127.0.0.1:4891/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{"model":"local","input":["semantic search","vector representation"]}'
 
 # Chat completion (non-streaming)
 curl http://127.0.0.1:4891/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"local","messages":[{"role":"user","content":"Tell me something true that no one wants to hear."}]}'
-
-# Chat completion (streaming)
-curl -N http://127.0.0.1:4891/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"local","stream":true,"messages":[{"role":"user","content":"Write a brutally honest analysis of social media."}]}'
+  -d '{"model":"local","messages":[{"role":"user","content":"Hello!"}]}'
 ```
-
-> **API Key:** Use `local` for any client that requires a non-empty key value.
 
 ---
 
-## Roadmap
+## 🤝 Credits & Acknowledgments
 
-| Feature | Status |
-|---------|--------|
-| On-device uncensored AI chat | **Launched** |
-| Real-time model loading with progress | **Launched** |
-| Cancel & unload models | **Launched** |
-| Persistent chat history sidebar | **Launched** |
-| Local OpenAI-compatible API server | **Launched** |
-| Custom model import (URL + file) | **Launched** |
-| Multi-platform support | **Launched** |
-| AI Agent Mode | In Progress |
-| Web search integration | Planned |
-| Voice interaction | Planned |
-| Image/vision model support | Planned |
+This fork is a product of excellent open-source foundations. We would like to credit and acknowledge the following individuals, teams, and libraries:
 
----
+### Original Author
+- **[techjarves](https://github.com/techjarves)**: Creator of the original **Uncensored-Local-AI-Multiplatform** codebase. We are incredibly grateful for their clean, modular, and beautiful layout designs and base local server implementation.
 
-## Contributing
+### Fork Developer
+- **[allen21jarilla](https://github.com/allen21jarilla) (Allen Jarilla)**: Developer of this fork. Implemented the standard OpenAI vector embeddings REST routing, the CLI parameter overrides engine, advanced FFI custom mapping parser, and the CI/CD cloud compilation workflow.
 
-All contributions are welcome — and we especially need help from the community in these areas:
-
-| Area | What's Needed |
-|------|---------------|
-| **Windows** | Testing, packaging, installer script |
-| **macOS** | Testing, App Store prep, notarization |
-| **Linux** | Testing on distros, AppImage build |
-| **General** | Bug reports, feature ideas, UI improvements |
-
-If you own a desktop device and can test the app — **please do!** Even a simple "works" or "crashes on X" issue report is incredibly valuable.
-
-```bash
-# Fork → Clone → Branch → Code → Push → PR
-git checkout -b fix/windows-model-loading
-git commit -m "fix: resolve model path on Windows"
-git push origin fix/windows-model-loading
-# Open a Pull Request — all sizes welcome
-```
+### Libraries & Frameworks
+- **[leehack](https://github.com/leehack) & the `llamadart` Team**: For building `llamadart`, the outstanding native FFI bridge and Dart package that connects Flutter applications directly to C++ inference logic.
+- **[ggerganov](https://github.com/ggerganov) & the `llama.cpp` Developers**: For their groundbreaking C++ local LLM inference engine, powering on-device AI across budget and high-end hardware.
+- **The Flutter Team**: For the beautiful cross-platform UI framework and development ecosystem.
+- **The GetX, Hive, and Wakelock Plus Teams**: For the foundational state management, local database storage, and system utility libraries.
 
 ---
 
 ## License
 
-Licensed under the **MIT License** — free to use, modify, and distribute.  
-See [LICENSE](LICENSE) for full details.
-
----
+This project is licensed under the **MIT License** — free to use, modify, and distribute.  
+See the [LICENSE](LICENSE) file for details.
 
 <div align="center">
-  <sub>Built with ❤️ using Flutter · Powered by <a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a></sub>
+  <sub>Built with ❤️ using Flutter · Powered by <a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a> and <a href="https://github.com/leehack/llamadart">llamadart</a></sub>
 </div>
