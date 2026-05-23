@@ -190,11 +190,10 @@ void main() {
 }
 
 class MockLlmService extends LlmService {
-  @override
-  final isLoaded = true.obs;
-
-  @override
-  final isGenerating = false.obs;
+  MockLlmService() {
+    isLoaded.value = true;
+    isGenerating.value = false;
+  }
 
   @override
   String get publicModelId => 'mock-model-id';
