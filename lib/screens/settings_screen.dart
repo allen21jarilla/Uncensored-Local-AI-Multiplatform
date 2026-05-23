@@ -359,6 +359,40 @@ class _SettingsBody extends StatelessWidget {
                         const SizedBox(height: 12),
                         SwitchListTile(
                           title: Text(
+                            'Enable Vector Embeddings',
+                            style: TextStyle(color: context.text, fontSize: 14),
+                          ),
+                          subtitle: Text(
+                            'Exposes the /v1/embeddings route for external tools like SillyTavern',
+                            style: TextStyle(
+                              color: context.textD,
+                              fontSize: 12,
+                            ),
+                          ),
+                          secondary: Icon(
+                            Icons.psychology_alt_rounded,
+                            color: apiServer.embeddingsEnabled.value ? AppColors.accent : context.textM,
+                          ),
+                          value: apiServer.embeddingsEnabled.value,
+                          onChanged: starting
+                              ? null
+                              : (enabled) async {
+                                  try {
+                                    await apiServer.setEmbeddingsEnabled(enabled);
+                                  } catch (e) {
+                                    Get.snackbar(
+                                      'Settings Error',
+                                      e.toString(),
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                  }
+                                },
+                          activeThumbColor: AppColors.accent,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        const SizedBox(height: 12),
+                        SwitchListTile(
+                          title: Text(
                             'Allow External Connections',
                             style: TextStyle(color: context.text, fontSize: 14),
                           ),

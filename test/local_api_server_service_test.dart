@@ -108,6 +108,106 @@ void main() {
       }
     },
   );
+
+  test(
+    'embeddings endpoint returns OpenAI-style error when disabled',
+    () async {
+      final port = await _freePort();
+      await apiServer.start(requestedPort: port);
+      await apiServer.setEmbeddingsEnabled(false);
+
+      final client = HttpClient();
+      try {
+        final request = await client.postUrl(
+          Uri.parse('http://127.0.0.1:$port/v1/embeddings'),
+        );
+        request.headers.contentType = ContentType.json;
+        request.write(
+          jsonEncode({
+            'model': 'local',
+            'input': 'Hello',
+          }),
+        );
+
+        final response = await request.close();
+        final body =
+            jsonDecode(await utf8.decoder.bind(response).join())
+                as Map<String, dynamic>;
+
+        expect(response.statusCode, HttpStatus.badRequest);
+        expect(body['error'], isA<Map>());
+        expect((body['error'] as Map)['code'], 'embeddings_disabled');
+      } finally {
+        client.close(force: true);
+      }
+    },
+  );
+
+  test(
+    'embeddings endpoint returns OpenAI-style response when enabled and model is loaded',
+    () async {
+      final port = await _freePort();
+      
+      Get.delete<LlmService>();
+      Get.put<LlmService>(MockLlmService());
+      
+      Get.delete<LocalApiServerService>();
+      apiServer = Get.put<LocalApiServerService>(LocalApiServerService());
+      
+      await apiServer.start(requestedPort: port);
+      await apiServer.setEmbeddingsEnabled(true);
+
+      final client = HttpClient();
+      try {
+        final request = await client.postUrl(
+          Uri.parse('http://127.0.0.1:$port/v1/embeddings'),
+        );
+        request.headers.contentType = ContentType.json;
+        request.write(
+          jsonEncode({
+            'model': 'local',
+            'input': ['hello', 'world'],
+          }),
+        );
+
+        final response = await request.close();
+        final body =
+            jsonDecode(await utf8.decoder.bind(response).join())
+                as Map<String, dynamic>;
+
+        expect(response.statusCode, HttpStatus.ok);
+        expect(body['object'], 'list');
+        expect(body['data'], isA<List>());
+        expect(body['data'].length, 2);
+        expect(body['data'][0]['embedding'], [0.1, 0.2, 0.3]);
+        expect(body['model'], 'mock-model-id');
+        expect(body['usage']['prompt_tokens'], 2);
+      } finally {
+        client.close(force: true);
+      }
+    },
+  );
+}
+
+class MockLlmService extends LlmService {
+  @override
+  final isLoaded = true.obs;
+
+  @override
+  final isGenerating = false.obs;
+
+  @override
+  String get publicModelId => 'mock-model-id';
+
+  @override
+  Future<List<double>> getEmbedding(String text) async {
+    return [0.1, 0.2, 0.3];
+  }
+
+  @override
+  Future<int> countTokens(String text) async {
+    return text.split(' ').length;
+  }
 }
 
 Future<int> _freePort() async {

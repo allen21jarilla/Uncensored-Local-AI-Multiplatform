@@ -395,6 +395,14 @@ class LlmService extends GetxService {
     }
   }
 
+  /// Expose the underlying llamadart embedding generator.
+  Future<List<double>> getEmbedding(String text) async {
+    if (_engine == null || !isLoaded.value) {
+      throw StateError('No model loaded. Call loadModel() first.');
+    }
+    return await _engine!.embed(text);
+  }
+
   /// Stop ongoing generation.
   Future<void> stopGeneration() async {
     _generateSub?.cancel();

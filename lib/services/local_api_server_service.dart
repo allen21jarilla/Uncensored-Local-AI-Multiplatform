@@ -23,6 +23,7 @@ class LocalApiServerService extends GetxService {
   final errorMessage = ''.obs;
   final port = defaultPort.obs;
   final allInterfaces = false.obs;
+  final embeddingsEnabled = false.obs;
 
   String get host => allInterfaces.value ? '0.0.0.0' : defaultHost;
   String get baseUrl {
@@ -38,6 +39,7 @@ class LocalApiServerService extends GetxService {
   Future<LocalApiServerService> init() async {
     port.value = _normalizePort(_storage.localApiServerPort);
     allInterfaces.value = _storage.localApiAllInterfaces;
+    embeddingsEnabled.value = _storage.localApiEmbeddingsEnabled;
     if (_storage.localApiServerEnabled) {
       await start();
     }
@@ -129,6 +131,11 @@ class LocalApiServerService extends GetxService {
     }
   }
 
+  Future<void> setEmbeddingsEnabled(bool value) async {
+    embeddingsEnabled.value = value;
+    _storage.localApiEmbeddingsEnabled = value;
+  }
+
   /// Get the device's local network IP address.
   Future<String?> getDeviceIp() async {
     try {
@@ -175,6 +182,11 @@ class LocalApiServerService extends GetxService {
 
       if (request.method == 'POST' && path == '/v1/chat/completions') {
         await _handleChatCompletions(request);
+        return;
+      }
+
+      if (request.method == 'POST' && path == '/v1/embeddings') {
+        await _handleEmbeddings(request);
         return;
       }
 
@@ -585,6 +597,96 @@ class LocalApiServerService extends GetxService {
   int _unixSeconds() => DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   String _completionId() => 'chatcmpl-${DateTime.now().microsecondsSinceEpoch}';
+
+  Future<void> _handleEmbeddings(HttpRequest request) async {
+    if (!embeddingsEnabled.value) {
+      await _writeError(
+        request.response,
+        HttpStatus.badRequest,
+        'Embeddings endpoint is disabled. Enable it in settings first.',
+        type: 'invalid_request_error',
+        code: 'embeddings_disabled',
+      );
+      return;
+    }
+
+    if (!hasLoadedModel) {
+      await _writeError(
+        request.response,
+        HttpStatus.serviceUnavailable,
+        'No model loaded. Load a model in Uncensored Local AI first.',
+        type: 'invalid_request_error',
+        code: 'model_not_loaded',
+      );
+      return;
+    }
+
+    if (isBusy) {
+      await _writeError(
+        request.response,
+        HttpStatus.tooManyRequests,
+        'Another inference is already in progress. Retry shortly.',
+        type: 'server_error',
+        code: 'busy',
+      );
+      return;
+    }
+
+    final body = await _readJsonObject(request);
+    final rawInput = body['input'];
+    if (rawInput == null) {
+      throw _OpenAiRequestException(
+        '`input` is a required field.',
+        param: 'input',
+      );
+    }
+
+    final List<String> inputs = [];
+    if (rawInput is String) {
+      inputs.add(rawInput);
+    } else if (rawInput is List) {
+      for (final item in rawInput) {
+        if (item is! String) {
+          throw _OpenAiRequestException(
+            'Each item in `input` must be a string.',
+            param: 'input',
+          );
+        }
+        inputs.add(item);
+      }
+    } else {
+      throw _OpenAiRequestException(
+        '`input` must be a string or an array of strings.',
+        param: 'input',
+      );
+    }
+
+    int totalTokens = 0;
+    final dataList = <Map<String, dynamic>>[];
+    for (int i = 0; i < inputs.length; i++) {
+      final text = inputs[i];
+      final embedding = await _llm.getEmbedding(text);
+      final tokens = await _llm.countTokens(text);
+      totalTokens += tokens;
+      dataList.add({
+        'object': 'embedding',
+        'index': i,
+        'embedding': embedding,
+      });
+    }
+
+    final usage = {
+      'prompt_tokens': totalTokens,
+      'total_tokens': totalTokens,
+    };
+
+    await _writeJson(request.response, {
+      'object': 'list',
+      'data': dataList,
+      'model': modelId,
+      'usage': usage,
+    });
+  }
 
   @override
   Future<void> onClose() async {

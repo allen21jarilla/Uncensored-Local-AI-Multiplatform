@@ -96,6 +96,12 @@ class ChatStorageService extends GetxService {
   set localApiAllInterfaces(bool value) =>
       _settingsBox.put('local_api_all_interfaces', value);
 
+  bool get localApiEmbeddingsEnabled =>
+      _settingsBox.get('local_api_embeddings_enabled', defaultValue: false) as bool;
+
+  set localApiEmbeddingsEnabled(bool value) =>
+      _settingsBox.put('local_api_embeddings_enabled', value);
+
   // ── Hardware Settings ──────────────────────────────────────
 
   int get gpuLayers =>
